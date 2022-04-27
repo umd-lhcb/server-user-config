@@ -20,8 +20,8 @@
           stateVersion = "21.11"; # typically you don't change this
 
           # change these yourself
-          homeDirectory = "/home/syp";
-          username = "syp";
+          homeDirectory = "/home/physicist";
+          username = "physicist";
 
           configuration = { pkgs, lib, ... }: {
             nixpkgs.overlays = [ overlay ];
@@ -45,6 +45,7 @@
 
               # define additional packages here
               # you can search the package names on https://search.nixos.org/packages
+              emacs
             ];
 
             imports = [
