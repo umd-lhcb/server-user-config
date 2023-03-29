@@ -10,22 +10,28 @@
 
   outputs = { self, nixpkgs, home-manager, flake-utils }:
     let
+      system = "x86_64-linux";
       overlay = import ./overlay/default.nix;
+      pkgs = import nixpkgs {
+        inherit system;
+        config = { allowUnfree = true; };
+        overlays = [ overlay ];
+      };
     in
     {
-      overlay = import ./overlay/default.nix;
-      users = {
-        physicist = home-manager.lib.homeManagerConfiguration {
-          system = "x86_64-linux";
-          stateVersion = "21.11"; # typically you don't change this
+      homeConfiguration.physicist = home-manager.lib.homeManagerConfiguration {
+        inherit pkgs;
 
-          # change these yourself
-          homeDirectory = "/home/physicist";
-          username = "physicist";
-
-          configuration = { pkgs, lib, ... }: {
-            nixpkgs.overlays = [ overlay ];
-
+        modules = [
+          {
+            home = {
+              stateVersion = "22.11";
+              # NOTE change below yourself!
+              username = "physicist";
+              homeDirectory = "/home/physicist";
+            };
+          }
+          {
             home.packages = with pkgs; [
               pkgs.home-manager
 
@@ -42,10 +48,14 @@
               # HEP
               root
               sxiv # image viewer
+              zathura # pdf viewer
+
+              # dev
+              nixpkgs-review
+              black
 
               # define additional packages here
               # you can search the package names on https://search.nixos.org/packages
-              emacs
             ];
 
             imports = [
@@ -67,25 +77,17 @@
               # config
               ./profiles/dircolors
             ];
-          };
-        };
+          }
+        ];
       };
     } //
-    flake-utils.lib.eachDefaultSystem (system:
-      let
-        pkgs = import nixpkgs {
-          inherit system;
-          config = { allowUnfree = true; };
-          overlays = [ overlay ];
-        };
-      in
-      {
-        devShell = pkgs.mkShell {
-          name = "server-user-config-devshell";
-          buildInputs = with pkgs; [
-            home-build
-            home-switch
-          ];
-        };
-      });
+    flake-utils.lib.eachSystem [ system ] (system: {
+      devShell = pkgs.mkShell {
+        name = "server-user-config-devshell";
+        buildInputs = with pkgs; [
+          home-build
+          home-switch
+        ];
+      };
+    });
 }
